@@ -1,6 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { ArrowRight, Hand, Gem, Globe, Sparkles, ChevronDown, Phone, Mail, MapPin, Star, Menu, X } from "lucide-react";
 import practitioner1 from "../assets/images/therapists/practitioner1.jpg";
+import landingImage1 from "../assets/images/site/landing_image_1.jpg";
+import landingImage2 from "../assets/images/site/landing_image_2.jpg";
+import landingImage3 from "../assets/images/site/landing_image_3.jpg";
+import landingImage4 from "../assets/images/site/landing_image_4.avif";
+
+const heroImages = [landingImage1, landingImage2, landingImage3, landingImage4];
 
 const services = [
   {
@@ -44,6 +50,26 @@ const services = [
   },
 ];
 
+function InstagramIcon({ size = 15, className }: { size?: number; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+    </svg>
+  );
+}
+
 const categories = ["All", "In-Person", "Remote"];
 
 
@@ -60,10 +86,66 @@ const testimonials = [
   },
 ];
 
+const GOOGLE_FORM_ACTION =
+  "https://docs.google.com/forms/d/e/1FAIpQLSezwbfk7Ck51gNhLzkOnTFW96M02kHVuZNt3t-6u-Kh3u0FCg/formResponse";
+
+const GOOGLE_FORM_ENTRIES = {
+  firstName: "entry.446723617",
+  lastName: "entry.145413809",
+  email: "entry.1867109700",
+  phone: "entry.1542914695",
+  service: "entry.348530543",
+  message: "entry.1119462074",
+};
+
 export default function App() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [menuOpen, setMenuOpen] = useState(false);
   const [expandedService, setExpandedService] = useState<number | null>(null);
+  const [contactForm, setContactForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    service: "",
+    message: "",
+  });
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "submitting" | "sent">("idle");
+  const [heroImageIndex, setHeroImageIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setHeroImageIndex((prev) => (prev + 1) % heroImages.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const updateContactField = (field: keyof typeof contactForm) =>
+    (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+      setContactForm((prev) => ({ ...prev, [field]: e.target.value }));
+    };
+
+  const handleContactSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSubmitStatus("submitting");
+
+    const body = new URLSearchParams();
+    (Object.keys(GOOGLE_FORM_ENTRIES) as (keyof typeof GOOGLE_FORM_ENTRIES)[]).forEach((field) => {
+      body.append(GOOGLE_FORM_ENTRIES[field], contactForm[field]);
+    });
+
+    try {
+      await fetch(GOOGLE_FORM_ACTION, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body,
+      });
+    } finally {
+      setSubmitStatus("sent");
+      setContactForm({ firstName: "", lastName: "", email: "", phone: "", service: "", message: "" });
+    }
+  };
 
   const filtered = activeCategory === "All"
     ? services
@@ -172,12 +254,17 @@ export default function App() {
           </div>
 
           <div className="relative">
-            <div className="aspect-[4/5] rounded-2xl overflow-hidden bg-secondary">
-              <img
-                src="https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=840&h=1050&fit=crop&auto=format"
-                alt="Reiki practitioner in a calm, light-filled studio"
-                className="w-full h-full object-cover"
-              />
+            <div className="aspect-[4/5] rounded-2xl overflow-hidden bg-secondary relative">
+              {heroImages.map((src, i) => (
+                <img
+                  key={src}
+                  src={src}
+                  alt="Reiki practitioner in a calm, light-filled studio"
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+                    i === heroImageIndex ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+              ))}
             </div>
           </div>
         </div>
@@ -481,20 +568,27 @@ export default function App() {
               </p>
               <div className="flex flex-col gap-4 text-sm opacity-80">
                 {[
-                  { icon: Phone, text: "+1 (415) 820-4400" },
-                  { icon: Mail, text: "hello@reikidimension.com" },
+                  { icon: Phone, text: "+44 7778 064448" },
+                  { icon: Mail, text: "reikidimensionhealing@gmail.com", href: "reikidimensionhealing@gmail.com" },
                   { icon: MapPin, text: "220 Harmony Lane, Portland, OR 97201" },
-                ].map(({ icon: Icon, text }) => (
+                  { icon: InstagramIcon, text: "@reikidimension", href: "https://www.instagram.com/reikidimension?igsh=aWlpZnJtOG9yZmxk&utm_source=qr" },
+                ].map(({ icon: Icon, text, href }) => (
                   <div key={text} className="flex items-center gap-3">
                     <Icon size={15} className="flex-shrink-0 opacity-60" />
-                    <span>{text}</span>
+                    {href ? (
+                      <a href={href} className="hover:opacity-100 transition-opacity">
+                        {text}
+                      </a>
+                    ) : (
+                      <span>{text}</span>
+                    )}
                   </div>
                 ))}
               </div>
             </div>
 
             <form
-              onSubmit={(e) => e.preventDefault()}
+              onSubmit={handleContactSubmit}
               className="bg-primary-foreground/10 rounded-2xl p-8 flex flex-col gap-4"
             >
               <div className="grid grid-cols-2 gap-4">
@@ -505,6 +599,9 @@ export default function App() {
                   <input
                     type="text"
                     placeholder="Maya"
+                    value={contactForm.firstName}
+                    onChange={updateContactField("firstName")}
+                    required
                     className="bg-primary-foreground/10 border border-primary-foreground/20 rounded-xl px-4 py-3 text-sm text-primary-foreground placeholder:opacity-40 focus:outline-none focus:border-primary-foreground/50 transition-colors"
                   />
                 </div>
@@ -515,6 +612,9 @@ export default function App() {
                   <input
                     type="text"
                     placeholder="Okonkwo"
+                    value={contactForm.lastName}
+                    onChange={updateContactField("lastName")}
+                    required
                     className="bg-primary-foreground/10 border border-primary-foreground/20 rounded-xl px-4 py-3 text-sm text-primary-foreground placeholder:opacity-40 focus:outline-none focus:border-primary-foreground/50 transition-colors"
                   />
                 </div>
@@ -526,6 +626,22 @@ export default function App() {
                 <input
                   type="email"
                   placeholder="maya@example.com"
+                  value={contactForm.email}
+                  onChange={updateContactField("email")}
+                  required
+                  className="bg-primary-foreground/10 border border-primary-foreground/20 rounded-xl px-4 py-3 text-sm text-primary-foreground placeholder:opacity-40 focus:outline-none focus:border-primary-foreground/50 transition-colors"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium opacity-70 uppercase tracking-wide">
+                  Phone
+                </label>
+                <input
+                  type="tel"
+                  placeholder="+1 (415) 820-4400"
+                  value={contactForm.phone}
+                  onChange={updateContactField("phone")}
+                  required
                   className="bg-primary-foreground/10 border border-primary-foreground/20 rounded-xl px-4 py-3 text-sm text-primary-foreground placeholder:opacity-40 focus:outline-none focus:border-primary-foreground/50 transition-colors"
                 />
               </div>
@@ -533,7 +649,11 @@ export default function App() {
                 <label className="text-xs font-medium opacity-70 uppercase tracking-wide">
                   Session or program interested in
                 </label>
-                <select className="bg-primary-foreground/10 border border-primary-foreground/20 rounded-xl px-4 py-3 text-sm text-primary-foreground focus:outline-none focus:border-primary-foreground/50 transition-colors appearance-none">
+                <select
+                  value={contactForm.service}
+                  onChange={updateContactField("service")}
+                  className="bg-primary-foreground/10 border border-primary-foreground/20 rounded-xl px-4 py-3 text-sm text-primary-foreground focus:outline-none focus:border-primary-foreground/50 transition-colors appearance-none"
+                >
                   <option value="" className="text-foreground">Select a session…</option>
                   {services.map((s) => (
                     <option key={s.id} value={s.title} className="text-foreground">
@@ -549,15 +669,22 @@ export default function App() {
                 <textarea
                   rows={3}
                   placeholder="Tell us a little about what brings you here…"
+                  value={contactForm.message}
+                  onChange={updateContactField("message")}
                   className="bg-primary-foreground/10 border border-primary-foreground/20 rounded-xl px-4 py-3 text-sm text-primary-foreground placeholder:opacity-40 focus:outline-none focus:border-primary-foreground/50 transition-colors resize-none"
                 />
               </div>
               <button
                 type="submit"
-                className="mt-2 bg-accent text-accent-foreground rounded-xl py-3 text-sm font-semibold hover:bg-accent/90 transition-colors flex items-center justify-center gap-2"
+                disabled={submitStatus === "submitting"}
+                className="mt-2 bg-accent text-accent-foreground rounded-xl py-3 text-sm font-semibold hover:bg-accent/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
               >
-                Send message <ArrowRight size={14} />
+                {submitStatus === "submitting" ? "Sending…" : "Send message"}
+                {submitStatus !== "submitting" && <ArrowRight size={14} />}
               </button>
+              {submitStatus === "sent" && (
+                <p className="text-sm text-center opacity-80">Thanks — we'll be in touch soon.</p>
+              )}
             </form>
           </div>
         </div>
