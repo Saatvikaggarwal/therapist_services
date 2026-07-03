@@ -570,7 +570,6 @@ export default function App() {
                 {[
                   { icon: Phone, text: "+44 7778 064448" },
                   { icon: Mail, text: "reikidimensionhealing@gmail.com", href: "reikidimensionhealing@gmail.com" },
-                  { icon: MapPin, text: "220 Harmony Lane, Portland, OR 97201" },
                   { icon: InstagramIcon, text: "@reikidimension", href: "https://www.instagram.com/reikidimension?igsh=aWlpZnJtOG9yZmxk&utm_source=qr" },
                 ].map(({ icon: Icon, text, href }) => (
                   <div key={text} className="flex items-center gap-3">
